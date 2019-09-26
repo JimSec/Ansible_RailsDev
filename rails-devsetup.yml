@@ -17,30 +17,26 @@
         state: present
         force_apt_get: yes
 
-    - name: "RVM GPG && Curl RVM"
-      become: yes
+    - name: "RVM gpg recv"
       become_user: ubuntu
-      shell: "{{ item }}"
+      shell: gpg --keyserver hkp://pool.sks-keyservers.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
       args:
         warn: false
-      loop:
-        - gpg --keyserver hkp://pool.sks-keyservers.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
-#        - curl -L https://get.rvm.io | bash -s stable --ruby
-#        - /home/ubuntu/.rvm/scripts/rvm install ruby
-#        - . .bashrc | rvm install ruby
-        - curl -L https://get.rvm.io | bash -s stable --ruby
+        creates: $HOME/.gnupg/trustdb.gpg
 
-    - name: "rvm install"
+    - name: "Curl RVM"
+      become: yes
       become_user: ubuntu
-      shell: "{{ item }}"
-      loop:
-        - .rvm/scripts/rvm install {{ ruby_version }}
+      shell: curl -L https://get.rvm.io | bash -s stable --ruby
+      args:
+        warn: false
+        creates: $HOME/.rvm/scripts/rvm
 
     - name: "Curl Nodejs Setup"
-      #      become: yes
       shell: curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash
       args:
         warn: false
+        creates: /usr/bin/nodejs
 
     - name: "Apt-get nodejs and npm"
       become: yes
@@ -62,3 +58,4 @@
       shell: $HOME/.rvm/bin/rvm all do gem install bundler nokogiri rails
       args:
         warn: false
+        creates: $HOME/.rvm/gems/default/gems/rails-*
