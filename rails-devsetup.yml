@@ -1,0 +1,64 @@
+---
+- hosts: [rails_devservers]
+  vars:
+    ruby_version: ruby-2.6.3
+  tasks:
+    - name: "Apt Update && Upgrade"
+      become: yes
+      apt: 
+        update_cache: yes
+        upgrade: safe
+        force_apt_get: yes
+
+    - name: "gnupg2 install"
+      become: yes
+      apt:
+        name: gnupg2
+        state: present
+        force_apt_get: yes
+
+    - name: "RVM GPG && Curl RVM"
+      become: yes
+      become_user: ubuntu
+      shell: "{{ item }}"
+      args:
+        warn: false
+      loop:
+        - gpg --keyserver hkp://pool.sks-keyservers.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
+#        - curl -L https://get.rvm.io | bash -s stable --ruby
+#        - /home/ubuntu/.rvm/scripts/rvm install ruby
+#        - . .bashrc | rvm install ruby
+        - curl -L https://get.rvm.io | bash -s stable --ruby
+
+    - name: "rvm install"
+      become_user: ubuntu
+      shell: "{{ item }}"
+      loop:
+        - .rvm/scripts/rvm install {{ ruby_version }}
+
+    - name: "Curl Nodejs Setup"
+      #      become: yes
+      shell: curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash
+      args:
+        warn: false
+
+    - name: "Apt-get nodejs and npm"
+      become: yes
+      apt:
+        name:
+          - nodejs
+        state: present
+        force_apt_get: yes
+
+    - name: "npm install yarn"
+      become: yes
+      npm:
+        name: yarn
+        global: yes
+        state: latest
+
+    - name: "gem installs"
+      become_user: ubuntu
+      shell: $HOME/.rvm/bin/rvm all do gem install bundler nokogiri rails
+      args:
+        warn: false
